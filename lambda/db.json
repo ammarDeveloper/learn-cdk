@@ -1,0 +1,29 @@
+{
+    "users": [
+      {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      {
+        "id": 2,
+        "name": "Jane Smith",
+        "email": "jane@example.com"
+      }
+    ],
+    "posts": [
+      {
+        "id": 1,
+        "title": "Hello World",
+        "content": "This is the first post.",
+        "authorId": 1
+      },
+      {
+        "id": 2,
+        "title": "Another Post",
+        "content": "This is another post in our static database.",
+        "authorId": 2
+      }
+    ]
+  }
+  

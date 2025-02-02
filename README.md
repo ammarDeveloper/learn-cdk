@@ -1,213 +1,275 @@
-# Get started with your CDK Lambda Project
+# AWS CDK Lambda Example
 
-This project demonstrates how to use the AWS Cloud Development Kit (CDK) to deploy a simple Lambda function written in JavaScript, triggered by an API Gateway. The CDK app is written in TypeScript.
+This project demonstrates how to use AWS CDK to create and manage AWS Lambda functions, layers, versions, and aliases. It also includes an API Gateway to expose the Lambda functions as RESTful APIs.
 
----
+## Table of Contents
 
-## **Prerequisites**
-
-Before you begin, ensure you have the following installed:
-
-1. **Node.js** (includes npm):  
-   Download from [nodejs.org](https://nodejs.org/). Verify with:
-   ```bash
-   node --version
-   npm --version
-   ```
-
-2. **AWS CLI**:  
-   Install and configure the AWS CLI by following the [official guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Then run:
-   ```bash
-   aws configure
-   ```
-   Provide your AWS access key, secret key, region (e.g., `us-east-1`), and default output format.
-
-3. **AWS CDK**:  
-   Install the CDK CLI globally:
-   ```bash
-   npm install -g aws-cdk
-   ```
-   Verify the installation:
-   ```bash
-   cdk --version
-   ```
+- [AWS CDK Lambda Example](#aws-cdk-lambda-example)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Project Structure](#project-structure)
+  - [Step-by-Step Guide](#step-by-step-guide)
+    - [1. Basic Lambda Function](#1-basic-lambda-function)
+      - [Key Features:](#key-features)
+      - [Code Example:](#code-example)
+    - [2. Lambda Function with Layer](#2-lambda-function-with-layer)
+      - [Key Features:](#key-features-1)
+      - [Code Example:](#code-example-1)
+    - [3. Complete Lambda Function with Version, Aliases, and API Gateway](#3-complete-lambda-function-with-version-aliases-and-api-gateway)
+      - [Key Features:](#key-features-2)
+      - [Code Example:](#code-example-2)
+  - [Definitions](#definitions)
+  - [Deployment](#deployment)
+  - [Cleanup](#cleanup)
+  - [Conclusion](#conclusion)
 
 ---
 
-## **Project Setup**
+## Prerequisites
 
-1. Clone this repository or create a new folder for your project:
-   ```bash
-   mkdir my-first-cdk-lambda && cd my-first-cdk-lambda
-   ```
-
-2. Initialize a CDK project in TypeScript:
-   ```bash
-   cdk init app --language typescript
-   ```
-
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+- [Node.js](https://nodejs.org/) installed
+- [AWS CLI](https://aws.amazon.com/cli/) installed and configured
+- [AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) installed
 
 ---
 
-## **Project Structure**
+## Project Structure
 
 ```
-my-first-cdk-lambda/
-├── lambda/
-│   └── index.js          # Lambda function code (JavaScript)
-├── lib/
-│   └── my-first-cdk-lambda-stack.ts  # CDK stack definition (TypeScript)
+my-lambda-project/
+│
 ├── bin/
-│   └── my-first-cdk-lambda.ts        # CDK app entrypoint
-├── package.json          # Node.js dependencies
-├── tsconfig.json         # TypeScript configuration
-├── cdk.json              # CDK configuration
-└── README.md             # This file
+│   └── my-lambda-project.ts                 # CDK App entry point
+│
+├── lib/
+│   ├── basic-lambda-stack.ts               # Basic Lambda stack
+│   ├── lambda-with-layer-stack.ts          # Lambda with Layer stack
+│   └── lambda-complete-stack.ts            # Complete Lambda stack with versions
+│
+├── lambda/                                 # Lambda function code
+│   ├── index.ts                           # Main Lambda handler
+│   └── package.json                       # Lambda dependencies
+│
+├── lambda-layer/                          # Lambda Layer code
+│   └── nodejs/                            # Node.js specific folder
+│       ├── utils.ts                       # Utility functions
+│       └── package.json                   # Layer dependencies
+│
+├── test/                                  # Test files
+│   └── lambda.test.ts                     # Tests for Lambda stacks
+│
+├── cdk.json                               # CDK configuration
+├── package.json                           # Project dependencies
+├── tsconfig.json                          # TypeScript configuration
+└── README.md                              # Project documentation
 ```
 
 ---
 
-## **Lambda Function**
+## Step-by-Step Guide
 
-The Lambda function is written in JavaScript and located in the `lambda/index.js` file. It returns a simple "Hello from my first Lambda function!" message.
+### 1. Basic Lambda Function
 
-```javascript
-// lambda/index.js
-exports.handler = async (event) => {
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify("Hello from my first Lambda function!"),
-  };
-  return response;
-};
-```
+The `BasicLambdaStack` creates a simple Lambda function with Node.js runtime. This stack demonstrates the creation of a Lambda function with basic configurations like memory size, timeout, and environment variables.
 
----
+#### Key Features:
+- **Runtime**: Node.js 20.x
+- **Handler**: `index.handler`
+- **Code**: Located in the `lambda` directory
+- **Environment Variables**: `ENVIRONMENT: development`
 
-## **CDK Stack**
-
-The CDK stack is defined in `lib/my-first-cdk-lambda-stack.ts`. It creates:
-1. A Lambda function using the code in the `lambda` folder.
-2. An API Gateway to trigger the Lambda function.
-
+#### Code Example:
 ```typescript
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import { Construct } from 'constructs';
 
-export class MyFirstCdkLambdaStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+export class BasicLambdaStack extends cdk.Stack {
+    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+        super(scope, id, props);
 
-    // Define the Lambda function
-    const myLambda = new lambda.Function(this, 'HelloLambda', {
-      runtime: lambda.Runtime.NODEJS_18_X, // Node.js 18.x
-      handler: 'index.handler', // File is "index.js", function is "handler"
-      code: lambda.Code.fromAsset('lambda'), // Path to the Lambda folder
-    });
-
-    // Create an API Gateway to trigger the Lambda
-    new apigateway.LambdaRestApi(this, 'MyApiGateway', {
-      handler: myLambda,
-    });
-  }
+        const helloFunction = new lambda.Function(this, 'HelloFunction', {
+            runtime: lambda.Runtime.NODEJS_20_X,
+            handler: 'index.handler',
+            code: lambda.Code.fromAsset('lambda'),
+            memorySize: 128,
+            timeout: cdk.Duration.seconds(30),
+            environment: {
+                ENVIRONMENT: 'development'
+            }
+        });
+    }
 }
 ```
 
 ---
 
-## **Deploy the Stack**
+### 2. Lambda Function with Layer
 
-1. **Synthesize the CloudFormation template** (optional):
-   ```bash
-   cdk synth
-   ```
+The `LambdaWithLayerStack` creates a Lambda function that uses a **Lambda Layer**. A Lambda Layer is a reusable component that can be shared across multiple Lambda functions. This stack demonstrates how to create a layer and attach it to a Lambda function.
 
-2. **Bootstrap your AWS account** (only needed once per account/region):
-   ```bash
-   cdk bootstrap aws://ACCOUNT-NUMBER/REGION
-   ```
-   Replace `ACCOUNT-NUMBER` with your AWS account ID and `REGION` (e.g., `us-east-1`).
+#### Key Features:
+- **Layer**: Contains utility functions (`utils.js`) for formatting responses and validating inputs.
+- **API Gateway**: Exposes the Lambda function as a REST API.
 
-3. **Deploy the stack**:
-   ```bash
-   cdk deploy
-   ```
-   Confirm the deployment by typing `y` when prompted.
+#### Code Example:
+```typescript
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as api from 'aws-cdk-lib/aws-apigateway';
+import { Construct } from 'constructs';
 
-4. After deployment, the terminal will output the API Gateway URL. It will look like:
-   ```
-   ✅ MyFirstCdkLambdaStack
+export class LambdaWithLayerStack extends cdk.Stack {
+    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+        super(scope, id, props);
 
-   Outputs:
-   MyFirstCdkLambdaStack.MyApiGatewayEndpoint1234ABCD = https://xxxx.execute-api.REGION.amazonaws.com/prod/
-   ```
+        const utilsLayer = new lambda.LayerVersion(this, 'UtilsLayer', {
+            code: lambda.Code.fromAsset('lambda-layer'),
+            compatibleRuntimes: [lambda.Runtime.NODEJS_20_X],
+            description: 'Common utilities layer'
+        });
 
----
+        const functionWithLayer = new lambda.Function(this, 'FunctionWithLayer', {
+            runtime: lambda.Runtime.NODEJS_20_X,
+            handler: 'index.handler',
+            code: lambda.Code.fromAsset('lambda'),
+            layers: [utilsLayer],
+            environment: {
+                ENVIRONMENT: 'development'
+            }
+        });
 
-## **Test the Lambda Function**
-
-1. Open the API Gateway URL in a browser or use `curl`:
-   ```bash
-   curl https://xxxx.execute-api.REGION.amazonaws.com/prod/
-   ```
-   You’ll see the response:
-   ```json
-   "Hello from my first Lambda function!"
-   ```
-
----
-
-## **Clean Up**
-
-To delete the Lambda function, API Gateway, and all associated resources:
-```bash
-cdk destroy
+        const gateway = new api.LambdaRestApi(this, 'LambdaAPI', {
+            handler: functionWithLayer,
+            proxy: true,
+            deployOptions: {
+                stageName: 'dev'
+            }
+        });
+    }
+}
 ```
 
 ---
 
-## **Troubleshooting**
+### 3. Complete Lambda Function with Version, Aliases, and API Gateway
 
-1. **"Cannot find module 'aws-cdk-lib'"?**  
-   Run:
+The `LambdaCompleteStack` demonstrates advanced Lambda features, including **versions**, **aliases**, and integration with **API Gateway**. 
+
+#### Key Features:
+- **Versions**: Immutable snapshots of a Lambda function.
+- **Aliases**: Pointers to specific versions (e.g., `dev` and `prod`).
+- **API Gateway**: Exposes the Lambda function with a production alias.
+
+#### Code Example:
+```typescript
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import { Construct } from 'constructs';
+
+export class LambdaCompleteStack extends cdk.Stack {
+    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+        super(scope, id, props);
+
+        const utilslayer = new lambda.LayerVersion(this, 'UtilsLayer', {
+            layerVersionName: 'MyutilsLayer',
+            code: lambda.Code.fromAsset('lambda-layer'),
+            compatibleRuntimes: [lambda.Runtime.NODEJS_20_X],
+            description: 'Common utilities layer'
+        });
+
+        const myFunction = new lambda.Function(this, 'MyFunction', {
+            functionName: 'MyCustomaLambdaFunction',
+            runtime: lambda.Runtime.NODEJS_20_X,
+            handler: 'index.handler',
+            code: lambda.Code.fromAsset('lambda'),
+            layers: [utilslayer]
+        });
+
+        const version = myFunction.currentVersion;
+
+        const devAlias = new lambda.Alias(this, 'DevAlias', {
+            aliasName: 'dev',
+            version: version
+        });
+
+        const prodAlias = new lambda.Alias(this, 'ProdAlias', {
+            aliasName: 'prod',
+            version: version
+        });
+
+        const api = new apigateway.LambdaRestApi(this, 'MyAPIGateway', {
+            restApiName: 'MyLambdaAPI',
+            handler: prodAlias,
+            proxy: true,
+            deployOptions: {
+                stageName: 'dev'
+            }
+        });
+
+        new cdk.CfnOutput(this, 'FunctionArn', {
+            value: myFunction.functionArn,
+            description: 'Lambda function arn'
+        });
+
+        new cdk.CfnOutput(this, 'LayerArn', {
+            value: utilslayer.layerVersionArn,
+            description: 'Lambda layer Arn'
+        });
+
+        new cdk.CfnOutput(this, 'ProdAliasArn', {
+            value: prodAlias.functionArn,
+            description: 'Production alias Arn'
+        });
+    }
+}
+```
+
+---
+
+## Definitions
+
+1. **Lambda Function**: A serverless compute service that runs your code in response to events.
+2. **Lambda Layer**: A reusable component that can include libraries, custom runtimes, or other dependencies.
+3. **Version**: An immutable snapshot of a Lambda function's code and configuration.
+4. **Alias**: A pointer to a specific version of a Lambda function, allowing you to manage environments like `dev` and `prod`.
+5. **API Gateway**: A fully managed service to create, publish, and secure RESTful APIs.
+
+---
+
+## Deployment
+
+1. Install dependencies:
    ```bash
-   npm install aws-cdk-lib
+   npm install
    ```
 
-2. **Lambda code not updating?**  
-   After updating `lambda/index.js`, redeploy with:
+2. Bootstrap the CDK (if not already done):
+   ```bash
+   cdk bootstrap
+   ```
+
+3. Deploy the stacks:
    ```bash
    cdk deploy
    ```
 
----
-
-## **Next Steps**
-
-- Add more Lambda functions or resources to the stack.
-- Explore other AWS services supported by the CDK.
-- Use CDK constructs to simplify complex architectures.
+4. After deployment, you will see the ARNs of the Lambda function, layer, and production alias in the console.
 
 ---
 
-Enjoy building with AWS CDK! 🚀
+## Cleanup
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+To avoid incurring charges, clean up the resources created by the CDK:
+```bash
+cdk destroy
+```
 
-## Useful commands
-
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
-
-Here’s a `README.md` file for your CDK project. It provides an overview of the project, instructions for setup, deployment, and cleanup, and a brief explanation of the project structure.
+This will delete all the resources created by the CDK stacks.
 
 ---
+
+## Conclusion
+
+This project provides a comprehensive example of how to use AWS CDK to manage Lambda functions, layers, versions, and aliases. It also demonstrates how to expose Lambda functions via API Gateway. You can extend this example to suit your specific use cases.
