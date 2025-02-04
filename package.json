@@ -2,7 +2,7 @@
   "name": "learning-cdk",
   "version": "0.1.0",
   "bin": {
-    "learning-cdk": "bin/learning-cdk.js"
+    "learning-cdk": "bin/my-ec2-project.ts"
   },
   "scripts": {
     "build": "tsc",
